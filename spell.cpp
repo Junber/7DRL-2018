@@ -76,7 +76,14 @@ void Spell::cast(int px, int py, int dx, int dy)
 {
     for (int i=0; i<effected[0].size(); i++)
     {
-        new Object(px+effected[0][i]*dx-effected[1][i]*dy,
-                   py+effected[0][i]*dy+effected[1][i]*dx,"alien_dead");
+        int x = px+effected[0][i]*dx-effected[1][i]*dy,
+            y = py+effected[0][i]*dy+effected[1][i]*dx;
+
+        for (Object* o: objects)
+        {
+            if (o->pos[0]==x && o->pos[1]==y) o->attack(this);
+        }
+
+        new Object(x,y,"marker");
     }
 }
