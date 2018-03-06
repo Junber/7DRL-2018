@@ -75,7 +75,7 @@ public:
         while (!file.eof())
         {
             std::getline(file,line);
-            spells.push_back(new Spell(line));
+            if (!line.empty()) spells.push_back(new Spell(line));
         }
     }
 };
