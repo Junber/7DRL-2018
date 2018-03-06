@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <random>
+#include <time.h>
 
 #include "spell.h"
 #include "global.h"
@@ -32,6 +34,19 @@ void limit_fps()
     last_time = SDL_GetTicks();
 }
 
+std::default_random_engine generator;
+int random(int x, int y)
+{
+    std::uniform_int_distribution<int> distribution(x,y);
+    return distribution(generator);
+}
+
+void random_init()
+{
+    generator.seed(time(nullptr));
+    random(0,1);
+}
+
 class Character: public Object
 {
 public:
@@ -40,29 +55,7 @@ public:
 
     Character(int x, int y, std::string s):Object(x, y, s)
     {
-
-    }
-
-    void move(int x, int y)
-    {
-        pos[0] += x;
-        pos[1] += y;
-
-        moves[0].push_back(x);
-        moves[1].push_back(y);
-
-        for (Spell* s: spells)
-        {
-            if (s->is_cast(moves)) s->cast(pos[0],pos[1],x,y);
-        }
-    }
-};
-
-class Player: public Character
-{
-public:
-    Player():Character(0,0,"Protag_idle")
-    {
+        killable = true;
         load_spells();
     }
 
@@ -78,6 +71,45 @@ public:
             if (!line.empty()) spells.push_back(new Spell(line));
         }
     }
+
+    virtual void move(int x, int y)
+    {
+        pos[0] += x;
+        pos[1] += y;
+
+        moves[0].push_back(x);
+        moves[1].push_back(y);
+
+        for (Spell* s: spells)
+        {
+            if (s->is_cast(moves)) s->cast(pos[0],pos[1],x,y);
+        }
+    }
+};
+
+class Random_walker: public Character
+{
+public:
+    Random_walker(int x, int y): Character(x,y,"Cripple Crew Soldier") {}
+
+    void update()
+    {
+        move(random(-1,1),random(-1,1));
+    }
+};
+
+class Player: public Character
+{
+public:
+    Player():Character(0,0,"Protag_idle")
+    {
+    }
+
+    void move(int x, int y)
+    {
+        Character::move(x,y);
+        for (Object* o: objects) o->update();
+    }
 };
 
 int main(int argc, char* args[])
@@ -88,6 +120,8 @@ int main(int argc, char* args[])
     renderer = SDL_CreateRenderer(renderwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     Player* player = new Player();
+
+    for(int i=0;i<5;i++) new Random_walker(random(1,7),random(1,7));
 
     //SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
     SDL_Event e;
@@ -145,28 +179,29 @@ int main(int argc, char* args[])
 			}
         }
 
-        SDL_SetRenderDrawColor(renderer,255,255,255,255);
-        SDL_RenderClear(renderer);
+        for (Object* o: to_delete) delete o;
+        to_delete.clear();
 
-        if (grid)
-        {
-            SDL_SetRenderDrawColor(renderer,0,0,0,255);
+        { //Rendering
+            SDL_SetRenderDrawColor(renderer,255,255,255,255);
+            SDL_RenderClear(renderer);
 
-            for (int x=0;x<window[0];x+=tilesize)
+            if (grid)
             {
-                SDL_RenderDrawLine(renderer,x,0,x,window[1]);
+                SDL_SetRenderDrawColor(renderer,0,0,0,255);
+
+                for (int x=0;x<window[0];x+=tilesize)
+                {
+                    SDL_RenderDrawLine(renderer,x,0,x,window[1]);
+                }
+
+                for (int y=0;y<window[1];y+=tilesize)
+                {
+                    SDL_RenderDrawLine(renderer,0,y,window[0],y);
+                }
             }
 
-            for (int y=0;y<window[1];y+=tilesize)
-            {
-                SDL_RenderDrawLine(renderer,0,y,window[0],y);
-            }
-        }
-
-        for (Object* o: objects)
-        {
-            o->update();
-            o->render();
+            for (Object* o: objects) o->render();
         }
 
         SDL_RenderPresent(renderer);
