@@ -32,9 +32,13 @@ Spell::Spell(std::string name)
     while (!moves_file.eof())
     {
         std::getline(moves_file,line);
-        auto splitted = split(line,',');
-        moves[0].push_back(std::stoi(splitted[0]));
-        moves[1].push_back(std::stoi(splitted[1]));
+        if (!line.empty())
+        {
+            auto splitted = split(line,',');
+            //std::cout <<"."<< line <<" "<< splitted.size()<<"\n";
+            moves[0].push_back(std::stoi(splitted[0]));
+            moves[1].push_back(std::stoi(splitted[1]));
+        }
     }
     moves_file.close();
 
@@ -42,9 +46,13 @@ Spell::Spell(std::string name)
     while (!effected_file.eof())
     {
         std::getline(effected_file,line);
-        auto splitted = split(line,',');
-        effected[0].push_back(std::stoi(splitted[0]));
-        effected[1].push_back(std::stoi(splitted[1]));
+        if (!line.empty())
+        {
+            auto splitted = split(line,',');
+            //std::cout <<"."<< line <<" "<< splitted.size()<<"\n";
+            effected[0].push_back(std::stoi(splitted[0]));
+            effected[1].push_back(std::stoi(splitted[1]));
+        }
     }
     effected_file.close();
 }
