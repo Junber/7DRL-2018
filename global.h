@@ -8,9 +8,7 @@
 #endif
 
 #include <SDL.h>
-#ifdef _DEBUG
-#include <iostream>
-#endif // _DEBUG
+#include <iostream> //Remove for release
 
 #define mapsizex 50
 #define mapsizey 50
