@@ -9,6 +9,12 @@ Character::Character(int x, int y, std::string s):Object(x, y, s)
     load_spells();
 }
 
+Character::~Character()
+{
+    moves[0].clear();
+    moves[1].clear();
+}
+
 void Character::load_spells()
 {
     std::fstream file;
@@ -34,21 +40,31 @@ bool Character::move(int x, int y)
     pos[0] += x;
     pos[1] += y;
 
+    std::cout << pos[0] << " " << pos[1] << " " << this;
+
     if (pos[0]<0 || pos[0]>=mapsizex || pos[1]<0 || pos[1]>=mapsizey || walls[pos[0]][pos[1]])
     {
+        std::cout << "!\n";
         pos[0] -= x;
         pos[1] -= y;
 
         return false;
     }
 
+    std::cout << ".";
+
     moves[0].push_back(x);
     moves[1].push_back(y);
+
+    if (moves[0].size() > 50) moves[0].pop_front();
+    if (moves[1].size() > 50) moves[1].pop_front();
 
     for (Spell* s: spells)
     {
         if (s->is_cast(moves)) s->cast(pos[0],pos[1],x,y);
     }
+
+    std::cout << ":\n";
 
     return true;
 }
@@ -56,5 +72,5 @@ bool Character::move(int x, int y)
 void Character::attack(Spell* s)
 {
     new Object(pos[0],pos[1],"alien_dead");
-    to_delete.push_back(this);
+    Object::attack(s);
 }

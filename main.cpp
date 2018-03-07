@@ -120,6 +120,7 @@ void gen_map()
 
 int main(int argc, char* args[])
 {
+    random_init();
     IMG_Init(IMG_INIT_PNG);
 
     renderwindow = SDL_CreateWindow("...", 50, 50, window[0], window[1], SDL_WINDOW_SHOWN);
@@ -130,7 +131,7 @@ int main(int argc, char* args[])
 
     move_camera();
 
-    for(int i=0;i<5;i++)
+    for(int i=0;i<15;i++)
     {
         new Random_walker(random(1,mapsizex),random(1,mapsizey));
     }
@@ -139,6 +140,7 @@ int main(int argc, char* args[])
     SDL_Event e;
 	while (!breakk)
     {
+        std::cout << "1\n";
         while(SDL_PollEvent(&e))
         {
 			if (e.type == SDL_QUIT) breakk = true;
@@ -191,9 +193,11 @@ int main(int argc, char* args[])
 			}
         }
 
+        std::cout << "2\n";
         for (Object* o: to_delete) delete o;
         to_delete.clear();
 
+        std::cout << "3\n";
         { //Rendering
             if (wall_tex)
             {
@@ -224,6 +228,7 @@ int main(int argc, char* args[])
             for (Object* o: objects) o->render();
         }
 
+        std::cout << "4\n";
         SDL_RenderPresent(renderer);
         limit_fps();
     }

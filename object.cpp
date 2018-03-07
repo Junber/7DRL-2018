@@ -19,7 +19,7 @@ Object::Object(int x, int y, std::string s)
     pos[0] = x;
     pos[1] = y;
 
-    killable = false;
+    killable = dead = false;
 
     tex = load_image(s);
     SDL_QueryTexture(tex, nullptr, nullptr, &size[0], &size[1]);
@@ -41,5 +41,9 @@ void Object::render()
 
 void Object::attack(Spell* s)
 {
-    to_delete.push_back(this);
+    if (!dead)
+    {
+        to_delete.push_back(this);
+        dead = true;
+    }
 }

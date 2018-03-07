@@ -20,7 +20,7 @@ class Object
 {
 public:
     int pos[2], size[2];
-    bool killable;
+    bool killable, dead;
     SDL_Texture* tex;
 
     Object(int x, int y, std::string s);

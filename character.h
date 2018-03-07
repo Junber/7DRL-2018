@@ -10,6 +10,7 @@ public:
     std::deque<Spell*> spells;
 
     Character(int x, int y, std::string s);
+    virtual ~Character();
 
     void load_spells();
     virtual bool move(int x, int y);
