@@ -12,14 +12,20 @@
 #include "spell.h"
 #include "global.h"
 #include "object.h"
+#include "character.h"
+#include "player.h"
+#include "rendering.h"
 
 #ifndef _STATIC
 void *__gxx_personality_v0;
 #endif
 
-const int window[2] = {500,500};
-const int tilesize = 50;
+const int window[2] = {1000,600};
+const int tilesize = 40;
 const bool grid = true;
+
+int camera[2] = {0,0};
+bool walls[mapsizex][mapsizey];
 
 bool breakk = false;
 SDL_Window* renderwindow;
@@ -47,46 +53,6 @@ void random_init()
     random(0,1);
 }
 
-class Character: public Object
-{
-public:
-    std::deque<int> moves[2];
-    std::deque<Spell*> spells;
-
-    Character(int x, int y, std::string s):Object(x, y, s)
-    {
-        killable = true;
-        load_spells();
-    }
-
-    void load_spells()
-    {
-        std::fstream file;
-        std::string line;
-
-        file.open(std::string("Data")+PATH_SEPARATOR+"Spells"+PATH_SEPARATOR+"spells.txt");
-        while (!file.eof())
-        {
-            std::getline(file,line);
-            if (!line.empty()) spells.push_back(new Spell(line));
-        }
-    }
-
-    virtual void move(int x, int y)
-    {
-        pos[0] += x;
-        pos[1] += y;
-
-        moves[0].push_back(x);
-        moves[1].push_back(y);
-
-        for (Spell* s: spells)
-        {
-            if (s->is_cast(moves)) s->cast(pos[0],pos[1],x,y);
-        }
-    }
-};
-
 class Random_walker: public Character
 {
 public:
@@ -98,19 +64,59 @@ public:
     }
 };
 
-class Player: public Character
+SDL_Texture* wall_tex=nullptr;
+void gen_wall_tex()
 {
-public:
-    Player():Character(0,0,"Protag_idle")
+    if (!wall_tex)
+        wall_tex = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA4444, SDL_TEXTUREACCESS_TARGET,
+                                     mapsizex*tilesize, mapsizey*tilesize);
+
+    SDL_SetRenderTarget(renderer,wall_tex);
+
+    SDL_SetRenderDrawColor(renderer,255,255,255,255);
+    SDL_RenderClear(renderer);
+
+    SDL_SetRenderDrawColor(renderer,0,0,0,255);
+    for (int i=0;i<mapsizex;i++)
     {
+        for (int u=0;u<mapsizey;u++)
+        {
+            if (walls[i][u])
+            {
+                SDL_Rect r = {i*tilesize,u*tilesize,tilesize,tilesize};
+                SDL_RenderFillRect(renderer,&r);
+            }
+        }
     }
 
-    void move(int x, int y)
+    SDL_SetRenderTarget(renderer,nullptr);
+}
+
+void gen_map()
+{
+    for (int i=0; i<mapsizex; i++)
     {
-        Character::move(x,y);
-        for (Object* o: objects) o->update();
+        for (int u=0; u<mapsizey; u++)
+        {
+            walls[i][u] = true;
+        }
     }
-};
+
+    int drunk[2] = {mapsizex/2,mapsizey/2};
+    int floor = 0;
+    while (floor < mapsizex*mapsizey*2/3)
+    {
+        if (walls[drunk[0]][drunk[1]])
+        {
+            floor++;
+            walls[drunk[0]][drunk[1]] = false;
+        }
+        drunk[0] = std::max(1, std::min(mapsizex-2, drunk[0]+random(-1,1) ));
+        drunk[1] = std::max(1, std::min(mapsizey-2, drunk[1]+random(-1,1) ));
+    }
+
+    gen_wall_tex();
+}
 
 int main(int argc, char* args[])
 {
@@ -119,9 +125,15 @@ int main(int argc, char* args[])
     renderwindow = SDL_CreateWindow("...", 50, 50, window[0], window[1], SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(renderwindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    Player* player = new Player();
+    gen_map();
+    player = new Player();
 
-    for(int i=0;i<5;i++) new Random_walker(random(1,7),random(1,7));
+    move_camera();
+
+    for(int i=0;i<5;i++)
+    {
+        new Random_walker(random(1,mapsizex),random(1,mapsizey));
+    }
 
     //SDL_SetRenderDrawBlendMode(renderer,SDL_BLENDMODE_BLEND);
     SDL_Event e;
@@ -183,8 +195,16 @@ int main(int argc, char* args[])
         to_delete.clear();
 
         { //Rendering
-            SDL_SetRenderDrawColor(renderer,255,255,255,255);
-            SDL_RenderClear(renderer);
+            if (wall_tex)
+            {
+                SDL_Rect r = {camera[0]*tilesize,camera[1]*tilesize,window[0],window[1]};
+                SDL_RenderCopy(renderer,wall_tex,&r,nullptr);
+            }
+            else //shouldn't be executed but safety and stuff
+            {
+                SDL_SetRenderDrawColor(renderer,255,255,255,255);
+                SDL_RenderClear(renderer);
+            }
 
             if (grid)
             {

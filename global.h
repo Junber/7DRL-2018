@@ -12,8 +12,14 @@
 #include <iostream>
 #endif // _DEBUG
 
+#define mapsizex 50
+#define mapsizey 50
+
 extern SDL_Renderer* renderer;
 extern const int window[2],tilesize;
 extern const bool grid;
+
+extern int camera[2];
+extern bool walls[mapsizex][mapsizey];
 
 #endif // _GLOBAL
