@@ -34,13 +34,12 @@ Object::~Object()
 
 void Object::render()
 {
-    SDL_Rect r={pos[0]*tilesize, pos[1]*tilesize, size[0], size[1]};
+    SDL_Rect r={(pos[0]-camera[0])*tilesize, (pos[1]-camera[1])*tilesize, size[0], size[1]};
 
     SDL_RenderCopy(renderer, tex, nullptr, &r);
 }
 
 void Object::attack(Spell* s)
 {
-    new Object(pos[0],pos[1],"alien_dead");
     to_delete.push_back(this);
 }
